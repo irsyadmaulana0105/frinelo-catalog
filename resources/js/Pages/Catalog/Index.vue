@@ -85,7 +85,8 @@ onMounted(() => {
 
     <header class="sticky top-0 z-30 h-14 border-b border-rose-100 bg-white/90 backdrop-blur">
       <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-4">
-        <a href="/" class="flex items-baseline gap-3">
+        <a href="/" class="flex items-center gap-3" aria-label="Frinelo">
+          <img src="/images/logo.png" alt="" class="h-9 w-auto" />
           <span class="font-display text-2xl uppercase tracking-[0.3em]">Frinelo</span>
           <span class="hidden text-[10px] uppercase tracking-[0.25em] text-stone-400 sm:inline">
             {{ shopInfo.subtitle }}

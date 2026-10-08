@@ -57,7 +57,10 @@ const chatUrl = computed(() =>
       </div>
 
       <!-- Bingkai lengkung (terinspirasi cermin pink di toko) -->
-      <div class="grid grid-cols-2 gap-3 md:gap-5">
+      <div
+        class="grid gap-3 md:gap-5"
+        :class="featured.length === 1 ? 'mx-auto w-3/5 max-w-[280px] grid-cols-1' : 'grid-cols-2'"
+      >
         <template v-if="featured.length">
           <button
             v-for="(p, i) in featured"

@@ -32,7 +32,6 @@ const waUrl = computed(() => {
     `- Warna: ${color.value}`,
     `- Harga: ${rupiah(props.product.price)}`,
   ]
-  
   const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
   if (INCLUDE_LINK && !isLocal) lines.push(`- Link: ${productUrl.value}`)
   lines.push('Apakah stoknya masih ada?')
@@ -99,7 +98,7 @@ onBeforeUnmount(() => {
               v-if="product.image_src"
               :src="product.image_src"
               :alt="product.name"
-              class="h-full w-full object-cover"
+              class="h-full w-full object-cover object-top"
             />
             <span
               v-if="isNew(product)"
@@ -115,7 +114,7 @@ onBeforeUnmount(() => {
               <p class="text-[11px] uppercase tracking-[0.25em] text-rose-400">{{ product.category }}</p>
               <h2 class="font-display mt-1 text-3xl leading-tight text-stone-900">{{ product.name }}</h2>
               <p class="mt-2 text-xl text-stone-800">{{ rupiah(product.price) }}</p>
-              <p v-if="product.description" class="mt-4 text-sm leading-relaxed text-stone-500">
+              <p v-if="product.description" class="mt-4 whitespace-pre-line text-sm leading-relaxed text-stone-500">
                 {{ product.description }}
               </p>
 

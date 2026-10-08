@@ -17,7 +17,7 @@ const maps = computed(
   <footer class="border-t border-rose-100 bg-rose-50/60">
     <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
       <div>
-        <p class="font-display text-2xl uppercase tracking-[0.3em] text-stone-900">Frinelo</p>
+        <img src="/images/logo.png" alt="Frinelo" class="h-20 w-auto" />
         <p class="mt-2 max-w-xs text-sm leading-relaxed text-stone-500">
           Fashion wanita dengan sentuhan manis dan feminin, langsung dari Sidoarjo.
         </p>

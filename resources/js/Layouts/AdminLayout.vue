@@ -23,7 +23,8 @@ watch(
   <div class="min-h-screen bg-rose-50/40 text-stone-800">
     <header class="sticky top-0 z-30 border-b border-rose-100 bg-white/90 backdrop-blur">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link :href="route('admin.products.index')" class="flex items-baseline gap-2">
+        <Link :href="route('admin.products.index')" class="flex items-center gap-2">
+          <img src="/images/logo.png" alt="" class="h-8 w-auto" />
           <span class="font-display text-xl uppercase tracking-[0.3em]">Frinelo</span>
           <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] uppercase tracking-wider text-rose-500">
             Admin
