@@ -1,11 +1,12 @@
 # Catatan Handoff: Frinelo Smart Catalog
 
-**Terakhir diperbarui:** 5 Oktober 2026
+**Terakhir diperbarui:** 8 Oktober 2026
 **Lokasi proyek di laptop:** `C:\Users\ASUS\Downloads\frinelo-catalog`
+**Repo GitHub:** `frinelo-catalog` (Private), branch `main`, commit pertama `358de88`
 
-File ini adalah **indeks dan catatan status** folder `docs/`. Baca ini dulu
-sebelum melanjutkan pekerjaan. (README di root proyek berisi cara instalasi
-dan menjalankan; file ini berisi posisi pekerjaan terakhir.)
+File ini adalah **indeks dan catatan status** folder `docs/`. README di root
+proyek berisi cara instalasi dan menjalankan; file ini berisi posisi pekerjaan
+terakhir. Baca ini dulu sebelum melanjutkan.
 
 ## Isi folder docs
 
@@ -31,53 +32,63 @@ dan menjalankan; file ini berisi posisi pekerjaan terakhir.)
 ## Status pekerjaan
 
 ### Sudah berjalan
-- Proyek Laravel + Breeze (Vue/Inertia) terpasang, Vite berjalan
-- Halaman katalog publik tampil (header, judul, filter, footer)
-- Migration, model, controller, request, route sudah dibuat
+- Database MySQL `frinelo` dengan tabel `users`, `products`, `cache`, `jobs`, `sessions`
+- 7 produk contoh bergaya Frinelo (data placeholder, belum foto asli)
+- Katalog publik versi desain baru: bar teks berjalan, hero bingkai lengkung,
+  strip Cara Pesan, filter menempel, pencarian, urutan harga, modal detail,
+  tombol WhatsApp mengambang, footer toko
+- Alur pesan WhatsApp teruji: pilih ukuran dan warna, WhatsApp terbuka dengan pesan terisi
+- Uji di HP lewat jaringan WiFi (LAN) berhasil
+- Dashboard admin bertema pink terpasang; login berhasil; password admin sudah diganti
+- Kode sudah di GitHub (Private)
 
-### Sudah ada kodenya, belum terkonfirmasi diterapkan
-- Tabel `products` terisi (terakhir katalog masih menampilkan "Belum ada produk")
-- Akun admin dan login `/login`
-- Dashboard admin versi baru (`AdminLayout.vue`, `Index.vue`, `Form.vue`, route `toggle`)
-- Ukuran "All Size" di `Product::SIZES`
-- Footer info toko dan `config/frinelo.php`
-- Tema pink pada tombol katalog
-- Uji modal: pilih ukuran/warna lalu tombol WhatsApp
+### Perlu diverifikasi
+- Route `register` sudah dikomentari di `routes/auth.php`:
+  `php artisan route:list --path=register` harus kosong dan `/register` harus 404
+- Pesan sukses (toast) muncul setelah tambah/hapus produk (bagian `flash`
+  di `HandleInertiaRequests.php` sudah ada)
+- Tampilan dashboard admin di layar HP (baris tombol di kartu produk bisa sempit)
+- Aturan firewall `Laravel dev 8000` (dibuat untuk uji HP): hapus jika tidak
+  dipakai lagi, lewat PowerShell Administrator:
+  `Remove-NetFirewallRule -DisplayName "Laravel dev 8000"`
 
 ### Belum dikerjakan
-Lihat [ROADMAP.md](ROADMAP.md).
+Lihat [ROADMAP.md](ROADMAP.md). Yang paling berpengaruh: foto produk asli,
+koreksi nama dan harga, konfirmasi nomor WhatsApp, logo, dan hosting.
 
 ## Mulai dari sini (urutan langkah berikutnya)
 
 1. Jalankan `composer run dev` (atau `npm run dev` + `php artisan serve`).
-2. Cek jumlah produk:
-   ```powershell
-   php artisan tinker --execute="echo App\Models\Product::count();"
-   ```
-3. Jika hasilnya 0: `php artisan db:seed --class=ProductSeeder`
-   (jalankan **sekali**, kalau dobel: `Product::truncate()` lalu seed ulang).
-4. Buat akun admin (perintah ada di README root), login di `/login`.
-5. Cek `Pages/Admin/Products/` berisi `Index.vue` dan `Form.vue` versi dashboard baru.
-6. Tambah satu produk lewat dashboard dengan foto asli, cek tampil di katalog.
-7. Klik produk di katalog, pilih ukuran dan warna, uji tombol WhatsApp
-   (pesan harus terisi rapi di WhatsApp).
-8. Nonaktifkan route `register` di `routes/auth.php`.
+2. Login ke `/login`, hapus produk contoh, upload foto asli lewat **+ Tambah**.
+3. Koreksi nama dan harga agar sesuai aslinya.
+4. Kirim satu pesan WhatsApp uji dan pastikan masuk ke nomor yang benar.
+5. Lihat katalog di HP, terutama hero dan modal produk dengan foto asli.
 
 ## Masalah yang pernah muncul dan solusinya
 
 | Gejala | Penyebab | Solusi |
 |---|---|---|
-| `GET .../Pages/Catalog/Index.vue 404` | File halaman ada di `Components/Catalog/`, bukan `Pages/Catalog/` | Pindahkan ke `resources/js/Pages/Catalog/Index.vue` |
+| `GET .../Pages/Catalog/Index.vue 404` atau `Page not found: ./Pages/Admin/Products/Index.vue` | File halaman ada di folder yang salah atau belum terpasang | Pastikan file ada di `resources/js/Pages/...` dengan huruf besar `P` persis |
 | `Failed to resolve import "./bootstrap"` | Skeleton Laravel baru tidak punya `resources/js/bootstrap.js` | Hapus baris `import './bootstrap'` di `app.js` (atau buat file-nya + `npm install axios`) |
-| `Vite manifest not found at public/build/manifest.json` | `npm run dev` tidak sedang berjalan | Jalankan `npm run dev` dan biarkan terbuka, atau `npm run build` |
-| `Get-ChildItem : A positional parameter cannot be found` | Di PowerShell, beberapa path dipisah koma, bukan spasi | `Get-ChildItem a, b, c` |
-| Katalog hanya menampilkan tombol "Semua" dan "Belum ada produk" | Tabel `products` kosong, atau semua `is_active = 0` | Jalankan seeder atau tambah produk lewat dashboard |
-| Port 5173 bentrok, atau file `public\hot` basi | Ada Vite lain berjalan | Hentikan proses lama, `Remove-Item public\hot`, jalankan ulang |
+| `Vite manifest not found` / `Unable to locate file in Vite manifest` | `npm run dev` tidak berjalan, dan Laravel memakai build lama | Jalankan `npm run dev`; hapus `public\build` agar tidak membingungkan; atau `npm run build` |
+| Halaman kosong di HP | Dev server Vite masih aktif (aset dicari ke `localhost`) | Hentikan `npm run dev`, hapus `public\hot`, `npm run build` |
+| `Table 'frinelo.users' doesn't exist` padahal migrate "Ran" | File `0001_01_01_000000_create_users_table.php` tertimpa skema `products` (`Schema::create('products'` di dalamnya) | Kembalikan ke isi bawaan Laravel (`Schema::create('users'`, `password_reset_tokens`, `sessions`), lalu `php artisan migrate:fresh` |
+| `Table 'products' already exists` saat migrate | Akibat masalah di atas | Perbaiki file migration users, lalu `migrate:fresh` |
+| Katalog kosong "Belum ada produk" | Tabel `products` kosong atau semua `is_active = 0` | Jalankan seeder atau tambah lewat dashboard |
+| Seeder menghasilkan produk lama (Dress, Tunik) | `ProductSeeder.php` belum diganti | Ganti isinya dengan produk Frinelo, `Product::truncate()`, lalu seed ulang |
+| Peringatan `baseUrl is deprecated` di `jsconfig.json` | Hanya peringatan editor | Hapus `baseUrl`, ubah `paths` menjadi `"@/*": ["./resources/js/*"]` |
+| HP "cannot be reached" saat uji WiFi | Server hanya di `127.0.0.1`, atau firewall memblokir port 8000 | `php artisan serve --host=0.0.0.0`, buat aturan firewall (PowerShell **Administrator**), pakai IP Wi-Fi laptop |
+| `New-NetFirewallRule : Access is denied` | Terminal VS Code tidak punya hak Administrator | Buka PowerShell via Start, klik kanan, Run as administrator |
+| `The "--tables" option does not exist` | Opsi tidak ada di versi Laravel ini | Pakai `php artisan db:show --counts` atau `Schema::getTableListing()` di tinker |
+| `Get-ChildItem : A positional parameter cannot be found` | PowerShell memisahkan path dengan koma, bukan spasi | `Get-ChildItem a, b, c` |
 
 ## Catatan lingkungan
 
 - OS: Windows, terminal PowerShell
-- Folder `Pages` memakai huruf besar `P`; nama folder dan file case-sensitive
-  di server Linux, jadi samakan persis
+- MySQL 8.0 (lokal) berisi banyak database proyek lain; proyek ini hanya
+  memakai database `frinelo` sesuai `.env`
+- Nama folder dan file case-sensitive di server Linux, samakan persis
 - Foto upload tersimpan di `storage/app/public/products` dan dibaca lewat
   `public/storage` (perlu `php artisan storage:link`)
+- Jangan menjalankan `php artisan test` langsung: `RefreshDatabase` menghapus
+  isi database yang aktif. Arahkan ke SQLite in-memory dulu (lihat ROADMAP)
