@@ -1,0 +1,27 @@
+/* Gaya khusus katalog Frinelo (CSS biasa, aman untuk Tailwind v3 maupun v4) */
+
+html { scroll-behavior: smooth; }
+
+/* Bingkai lengkung seperti cermin pink di toko */
+.arch { border-radius: 9999px 9999px 1.5rem 1.5rem; }
+
+.bg-blush-hero {
+  background:
+    radial-gradient(ellipse at 85% 0%, #ffe1e8 0%, rgba(255, 255, 255, 0) 60%),
+    #fff8f9;
+}
+
+/* Teks berjalan di bar atas */
+@keyframes frinelo-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track { animation: frinelo-marquee 40s linear infinite; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  html { scroll-behavior: auto; }
+}

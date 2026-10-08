@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { font-family: 'Jost', ui-sans-serif, system-ui, sans-serif; }
+.font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
