@@ -43,6 +43,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->deleteStoredImage();
+        $product->deleteStoredGallery();
         $product->delete();
 
         return back()->with('success', 'Produk dihapus.');
@@ -67,12 +68,27 @@ class ProductController extends Controller
 
     private function payload(ProductRequest $request, ?Product $product = null): array
     {
-        $data = $request->safe()->except('image');
+        $data = $request->safe()->except(['image', 'gallery_new', 'keep_gallery']);
 
+        // Foto sampul
         if ($request->hasFile('image')) {
             $product?->deleteStoredImage();
             $data['image_url'] = $request->file('image')->store('products', 'public');
         }
+
+        // Galeri: pertahankan yang dipilih, hapus yang dibuang, tambah unggahan baru
+        $current = $product?->gallery ?? [];
+        $keep    = array_values(array_intersect((array) $request->input('keep_gallery', []), $current));
+
+        foreach (array_diff($current, $keep) as $removed) {
+            Product::deleteFile($removed);
+        }
+
+        $room  = max(0, Product::MAX_GALLERY - count($keep));
+        $files = array_slice((array) $request->file('gallery_new', []), 0, $room);
+        $added = array_map(fn ($file) => $file->store('products', 'public'), $files);
+
+        $data['gallery'] = array_merge($keep, $added);
 
         return $data;
     }

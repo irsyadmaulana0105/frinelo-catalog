@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import InputLabel from '@/Components/InputLabel.vue'
@@ -25,10 +25,64 @@ const form = useForm({
   description: props.product?.description ?? '',
   is_active: props.product?.is_active ?? true,
   image: null,
+  gallery_new: [],
+  keep_gallery: [],
 })
 
 const preview = ref(props.product?.image_src ?? null)
 const colorInput = ref('')
+const busy = ref(false)
+
+// ---- Foto tambahan (galeri) ----
+const MAX_GALLERY = 5
+const existing = ref(
+  (props.product?.gallery ?? []).map((path, i) => ({ path, src: props.product.gallery_src?.[i] ?? path })),
+)
+const added = ref([]) // { file, src }
+const room = computed(() => MAX_GALLERY - existing.value.length - added.value.length)
+const galleryError = computed(
+  () => Object.entries(form.errors).find(([key]) => key.startsWith('gallery_new'))?.[1],
+)
+
+// Foto dari HP sering 3-6 MB. Kecilkan dulu sebelum diunggah; kalau gagal, pakai file asli.
+async function shrink(file, max = 1600, quality = 0.85) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height))
+    const w = Math.round(bmp.width * scale)
+    const h = Math.round(bmp.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(bmp, 0, 0, w, h)
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+    if (!blob || blob.size >= file.size) return file // jangan memperbesar
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
+
+async function onGallery(e) {
+  const picked = Array.from(e.target.files ?? []).slice(0, Math.max(room.value, 0))
+  e.target.value = ''
+  busy.value = true
+  for (const original of picked) {
+    const file = await shrink(original)
+    added.value.push({ file, src: URL.createObjectURL(file) })
+  }
+  busy.value = false
+}
+function removeExisting(path) {
+  existing.value = existing.value.filter((g) => g.path !== path)
+}
+function removeAdded(i) {
+  added.value.splice(i, 1)
+}
 
 const field =
   'mt-1 block w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-400'
@@ -59,14 +113,20 @@ function removeColor(c) {
   form.colors = form.colors.filter((x) => x !== c)
 }
 
-function onFile(e) {
-  const file = e.target.files[0] ?? null
+async function onFile(e) {
+  const picked = e.target.files[0] ?? null
+  if (!picked) return
+  busy.value = true
+  const file = await shrink(picked)
+  busy.value = false
   form.image = file
-  if (file) preview.value = URL.createObjectURL(file)
+  preview.value = URL.createObjectURL(file)
 }
 
 function submit() {
   addColor() // masukkan warna yang masih terketik
+  form.keep_gallery = existing.value.map((g) => g.path)
+  form.gallery_new = added.value.map((g) => g.file)
   const url = isEdit
     ? route('admin.products.update', props.product.id)
     : route('admin.products.store')
@@ -96,11 +156,51 @@ function submit() {
             <div v-else class="flex h-24 w-[4.5rem] items-center justify-center rounded-lg bg-rose-100 text-2xl text-rose-300">+</div>
             <span class="text-sm text-stone-500">
               <span class="font-medium text-rose-500">{{ preview ? 'Ganti foto' : 'Pilih foto' }}</span><br />
-              Format portrait 3:4, maks 2 MB
+              Portrait 3:4. Ukuran foto dikecilkan otomatis
             </span>
           </label>
           <input id="image" type="file" accept="image/*" class="sr-only" @change="onFile" />
           <InputError :message="form.errors.image" class="mt-1" />
+        </div>
+
+        <!-- Foto tambahan -->
+        <div>
+          <InputLabel :value="`Foto tambahan (${existing.length + added.length}/${MAX_GALLERY})`" />
+          <p class="mt-0.5 text-xs text-stone-400">Tampil sebagai foto geser di halaman detail produk.</p>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <div v-for="g in existing" :key="g.path" class="relative">
+              <img :src="g.src" alt="" class="h-24 w-[4.5rem] rounded-lg object-cover" />
+              <button
+                type="button"
+                class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 text-sm leading-none text-white"
+                aria-label="Hapus foto"
+                @click="removeExisting(g.path)"
+              >
+                &times;
+              </button>
+            </div>
+            <div v-for="(g, i) in added" :key="g.src" class="relative">
+              <img :src="g.src" alt="" class="h-24 w-[4.5rem] rounded-lg object-cover" />
+              <button
+                type="button"
+                class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 text-sm leading-none text-white"
+                aria-label="Batalkan foto"
+                @click="removeAdded(i)"
+              >
+                &times;
+              </button>
+            </div>
+            <label
+              v-if="room > 0"
+              for="gallery"
+              class="flex h-24 w-[4.5rem] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-rose-200 bg-rose-50/40 text-xs text-rose-500 transition hover:border-rose-400"
+            >
+              <span class="text-2xl leading-none">+</span>
+              Tambah
+            </label>
+          </div>
+          <input id="gallery" type="file" accept="image/*" multiple class="sr-only" @change="onGallery" />
+          <InputError :message="galleryError" class="mt-1" />
         </div>
 
         <!-- Nama & harga -->
@@ -217,8 +317,8 @@ function submit() {
 
         <!-- Simpan -->
         <div class="sticky bottom-0 -mx-5 -mb-5 flex items-center gap-4 rounded-b-2xl border-t border-rose-100 bg-white/95 px-5 py-3 backdrop-blur">
-          <PrimaryButton :disabled="form.processing">
-            {{ form.processing ? 'Menyimpan...' : 'Simpan' }}
+          <PrimaryButton :disabled="form.processing || busy">
+            {{ form.processing ? 'Menyimpan...' : busy ? 'Memproses foto...' : 'Simpan' }}
           </PrimaryButton>
           <Link :href="route('admin.products.index')" class="text-sm text-stone-500 hover:text-rose-500">Batal</Link>
         </div>

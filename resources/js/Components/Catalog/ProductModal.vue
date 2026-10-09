@@ -55,7 +55,28 @@ const chip = (on) =>
     ? 'border-rose-400 bg-rose-400 text-white'
     : 'border-stone-200 bg-white text-stone-600 hover:border-rose-300'
 
-const onKey = (e) => e.key === 'Escape' && emit('close')
+// Galeri foto: foto sampul + foto tambahan
+const photos = computed(() => [props.product.image_src, ...(props.product.gallery_src ?? [])].filter(Boolean))
+const strip = ref(null)
+const current = ref(0)
+
+function onScroll() {
+  const el = strip.value
+  if (el && el.clientWidth) current.value = Math.round(el.scrollLeft / el.clientWidth)
+}
+function go(i) {
+  const el = strip.value
+  const total = photos.value.length
+  if (!el || total < 2) return
+  const n = (i + total) % total
+  el.scrollTo({ left: n * el.clientWidth, behavior: 'smooth' })
+}
+
+const onKey = (e) => {
+  if (e.key === 'Escape') emit('close')
+  if (e.key === 'ArrowLeft') go(current.value - 1)
+  if (e.key === 'ArrowRight') go(current.value + 1)
+}
 
 onMounted(() => {
   document.body.style.overflow = 'hidden'
@@ -92,20 +113,59 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="grid md:grid-cols-2">
-          <!-- Foto -->
+          <!-- Foto (geser untuk melihat foto lain) -->
           <div class="relative h-72 bg-rose-50 md:h-full md:min-h-[540px]">
-            <img
-              v-if="product.image_src"
-              :src="product.image_src"
-              :alt="product.name"
-              class="h-full w-full object-cover object-top"
-            />
+            <div
+              ref="strip"
+              class="no-scrollbar absolute inset-0 flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+              @scroll.passive="onScroll"
+            >
+              <img
+                v-for="(src, i) in photos"
+                :key="`${i}-${src}`"
+                :src="src"
+                :alt="`${product.name}, foto ${i + 1}`"
+                :loading="i ? 'lazy' : 'eager'"
+                class="h-full w-full shrink-0 snap-center object-cover object-top"
+              />
+            </div>
+
             <span
               v-if="isNew(product)"
               class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-rose-500 shadow-sm"
             >
               Baru
             </span>
+
+            <template v-if="photos.length > 1">
+              <button
+                type="button"
+                class="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-stone-700 shadow transition hover:text-rose-500"
+                aria-label="Foto sebelumnya"
+                @click="go(current - 1)"
+              >
+                <Icon name="chevron-left" :size="18" />
+              </button>
+              <button
+                type="button"
+                class="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-stone-700 shadow transition hover:text-rose-500"
+                aria-label="Foto berikutnya"
+                @click="go(current + 1)"
+              >
+                <Icon name="chevron-right" :size="18" />
+              </button>
+              <div class="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+                <button
+                  v-for="(_, i) in photos"
+                  :key="i"
+                  type="button"
+                  class="h-1.5 rounded-full transition-all"
+                  :class="i === current ? 'w-5 bg-white' : 'w-1.5 bg-white/60'"
+                  :aria-label="`Lihat foto ${i + 1}`"
+                  @click="go(i)"
+                />
+              </div>
+            </template>
           </div>
 
           <!-- Info -->

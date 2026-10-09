@@ -6,6 +6,7 @@ import HeroSection from '@/Components/Catalog/HeroSection.vue'
 import HowToOrder from '@/Components/Catalog/HowToOrder.vue'
 import ProductCard from '@/Components/Catalog/ProductCard.vue'
 import ProductModal from '@/Components/Catalog/ProductModal.vue'
+import ResellerBanner from '@/Components/Catalog/ResellerBanner.vue'
 import SiteFooter from '@/Components/Catalog/SiteFooter.vue'
 import WhatsAppFab from '@/Components/Catalog/WhatsAppFab.vue'
 import Icon from '@/Components/Catalog/Icon.vue'
@@ -192,6 +193,7 @@ onMounted(() => {
       </div>
     </main>
 
+    <ResellerBanner :shop="shopInfo" />
     <SiteFooter :shop="shopInfo" :whatsapp-number="whatsappNumber" />
     <WhatsAppFab :whatsapp-number="whatsappNumber" />
 

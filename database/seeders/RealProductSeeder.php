@@ -22,7 +22,13 @@ class RealProductSeeder extends Seeder
             $product = Product::firstOrNew(['name' => $p['name']]);
 
             if ($product->exists) {
-                continue; // sudah ada, jangan timpa
+                // Sudah ada: jangan timpa. Hanya lengkapi galeri jika masih kosong.
+                if (empty($product->gallery) && ! empty($p['gallery'])) {
+                    $product->gallery = $this->storeGallery($p['gallery']);
+                    $product->save();
+                }
+
+                continue;
             }
 
             $source   = database_path("seeders/images/{$p['slug']}.jpg");
@@ -39,6 +45,7 @@ class RealProductSeeder extends Seeder
                 'sizes'       => ['All Size'],
                 'colors'      => $p['colors'],
                 'image_url'   => $hasImage ? $path : null,
+                'gallery'     => $this->storeGallery($p['gallery'] ?? []),
                 'description' => implode("\n", array_merge([$p['intro'], '', 'Detail ukuran'], $p['detail'])),
                 'is_active'   => $p['active'] ?? true,
             ]);
@@ -49,6 +56,26 @@ class RealProductSeeder extends Seeder
         }
     }
 
+    /** Salin foto tambahan dari database/seeders/images ke storage, kembalikan path-nya. */
+    private function storeGallery(array $slugs): array
+    {
+        $paths = [];
+
+        foreach ($slugs as $slug) {
+            $source = database_path("seeders/images/{$slug}.jpg");
+
+            if (! File::exists($source)) {
+                continue;
+            }
+
+            $path = "products/{$slug}.jpg";
+            Storage::disk('public')->put($path, File::get($source));
+            $paths[] = $path;
+        }
+
+        return $paths;
+    }
+
     private function products(): array
     {
         return [
@@ -57,6 +84,7 @@ class RealProductSeeder extends Seeder
                 'colors' => ['White', 'Cream', 'Pink'],
                 'intro'  => 'Atasan model vest rajut V-neck dengan kerah kemeja dan lengan puff. Aksen garis pink dan biru serta emblem university di dada.',
                 'detail' => ['Lingkar dada: 90-120 cm', 'Panjang baju: 55 cm', 'Panjang lengan: 25 cm'],
+                'gallery' => ['university-top-2'],
             ],
             [
                 'slug' => 'stripe-button-top', 'name' => 'Stripe Button Top', 'price' => 95000, 'category' => 'Rajut',
